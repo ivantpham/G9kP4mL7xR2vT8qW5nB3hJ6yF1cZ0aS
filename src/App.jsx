@@ -38,7 +38,160 @@ function Candle({ x, open, high, low, close, width = 20, priceToY, onDragEnd, on
   )
 }
 
+// === MÀN HÌNH ĐĂNG NHẬP ===
+function LoginScreen({ onLoginSuccess }) {
+  const [selectedUser, setSelectedUser] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+
+  const suggestedUsers = [
+    'TraderPro',
+    'PriceAction',
+    'CandleMaster',
+    'ChartWizard',
+    'BullBear',
+    'ForexKing',
+    'CryptoQueen',
+    'SwingTrader',
+    'DayTraderVN',
+    'ScalperX'
+  ]
+
+  const requiredUsername = 'PriceAction'
+  const correctPasswordHash = 'enhjdmJubW1uYnZjeHo=' // btoa('zxcvbnmmnbvcxz')
+
+  const handleLogin = () => {
+    setError('')
+
+    if (!selectedUser) {
+      setError('Vui lòng chọn tên người dùng')
+      return
+    }
+
+    if (selectedUser !== requiredUsername) {
+      setError('Tên người dùng không hợp lệ!')
+      return
+    }
+
+    if (!password) {
+      setError('Vui lòng nhập mật khẩu')
+      return
+    }
+
+    if (btoa(password) === correctPasswordHash) {
+      onLoginSuccess()
+    } else {
+      setError('Mật khẩu không đúng!')
+    }
+  }
+
+  return (
+    <div style={{
+      position: 'absolute',
+      inset: 0,
+      background: 'linear-gradient(135deg, #0f0f0f, #1a1a1a)',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 9999,
+      color: '#fff',
+      fontFamily: 'Arial, sans-serif',
+    }}>
+      <div style={{
+        background: '#222',
+        padding: '40px 50px',
+        borderRadius: '16px',
+        boxShadow: '0 10px 40px rgba(0,0,0,0.8)',
+        minWidth: '360px',
+        textAlign: 'center',
+        border: '1px solid #444',
+      }}>
+        <h1 style={{ margin: '0 0 30px 0', fontSize: '32px', color: '#00bcd4' }}>
+          CandleCreator
+        </h1>
+        <p style={{ marginBottom: '30px', color: '#aaa' }}>
+          Vui lòng đăng nhập để tiếp tục
+        </p>
+
+        <div style={{ marginBottom: '20px' }}>
+          <select
+            value={selectedUser}
+            onChange={(e) => setSelectedUser(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '14px',
+              fontSize: '16px',
+              borderRadius: '8px',
+              border: '1px solid #555',
+              background: '#333',
+              color: '#fff',
+            }}
+          >
+            <option value="">-- Chọn tên người dùng --</option>
+            {suggestedUsers.map(user => (
+              <option key={user} value={user}>{user}</option>
+            ))}
+          </select>
+        </div>
+
+        <div style={{ marginBottom: '20px' }}>
+          <input
+            type="password"
+            placeholder="Nhập mật khẩu"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+            style={{
+              width: '100%',
+              padding: '14px',
+              fontSize: '16px',
+              borderRadius: '8px',
+              border: '1px solid #555',
+              background: '#333',
+              color: '#fff',
+              boxSizing: 'border-box',
+            }}
+          />
+        </div>
+
+        {error && (
+          <p style={{ color: '#ff5252', margin: '10px 0 20px 0', fontWeight: 'bold' }}>
+            {error}
+          </p>
+        )}
+
+        <button
+          onClick={handleLogin}
+          style={{
+            width: '100%',
+            padding: '14px',
+            fontSize: '18px',
+            fontWeight: 'bold',
+            background: '#00bcd4',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+          }}
+          onMouseOver={(e) => e.target.style.background = '#00acc1'}
+          onMouseOut={(e) => e.target.style.background = '#00bcd4'}
+        >
+          Đăng nhập
+        </button>
+
+        <p style={{ marginTop: '20px', fontSize: '12px', color: '#777' }}>
+          Gợi ý: Chỉ tên <strong>PriceAction</strong> mới được chấp nhận
+        </p>
+      </div>
+    </div>
+  )
+}
+
+// === APP CHÍNH ===
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+
   const [candles, setCandles] = useState([])
   const [scale, setScale] = useState(1)
   const [offset, setOffset] = useState({ x: 50, y: 0 })
@@ -46,7 +199,6 @@ function App() {
   const [editValues, setEditValues] = useState({ open: 100, high: 110, low: 90, close: 105 })
   const [isPanelOpen, setIsPanelOpen] = useState(false)
 
-  // Màu sắc tùy chỉnh
   const [chartBgColor, setChartBgColor] = useState('#000000')
   const [bullColor, setBullColor] = useState('#26a69a')
   const [bearColor, setBearColor] = useState('#ef5350')
@@ -54,7 +206,7 @@ function App() {
   const stageRef = useRef()
   const stageContainerRef = useRef()
   const headerRef = useRef()
-  const fileInputRef = useRef()  // Để kích hoạt mở file
+  const fileInputRef = useRef()
 
   const [stageSize, setStageSize] = useState({ width: 800, height: 600 })
 
@@ -151,7 +303,6 @@ function App() {
     },
   })
 
-  // === SAVE DATA (JSON) ===
   const saveData = () => {
     const data = {
       candles,
@@ -163,7 +314,6 @@ function App() {
     saveAs(blob, 'candles-data.json')
   }
 
-  // === OPEN DATA (JSON) ===
   const openData = () => {
     fileInputRef.current.click()
   }
@@ -192,8 +342,6 @@ function App() {
       }
     }
     reader.readAsText(file)
-
-    // Reset input để có thể mở lại cùng file
     e.target.value = ''
   }
 
@@ -212,6 +360,12 @@ function App() {
     return ((centerPrice - price) / paddedRange) * stageSize.height + stageSize.height / 2
   }
 
+  // Nếu chưa đăng nhập → hiện màn hình login
+  if (!isAuthenticated) {
+    return <LoginScreen onLoginSuccess={() => setIsAuthenticated(true)} />
+  }
+
+  // Đã đăng nhập → hiện ứng dụng chính
   return (
     <div
       style={{
@@ -256,9 +410,9 @@ function App() {
           </button>
         </div>
         <p style={{ margin: '10px 0', fontSize: '14px' }}>
+          Click vào nến để chỉnh sửa • Drag nến để di chuyển toàn bộ • Alt + Drag để pan • Scroll để zoom
         </p>
 
-        {/* NÚT ZOOM */}
         <button
           onClick={resetZoom}
           style={{
@@ -279,7 +433,6 @@ function App() {
           {Math.round(scale * 100)}%
         </button>
 
-        {/* 3 NÚT ĐỔI MÀU */}
         <div style={{ margin: '20px 0', display: 'flex', justifyContent: 'center', gap: '20px', flexWrap: 'wrap' }}>
           <div style={{ textAlign: 'center' }}>
             <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>Nền biểu đồ</label>
@@ -356,7 +509,6 @@ function App() {
           </Layer>
         </Stage>
 
-        {/* INPUT ẨN ĐỂ MỞ FILE */}
         <input
           type="file"
           ref={fileInputRef}
@@ -365,7 +517,6 @@ function App() {
           onChange={handleFileChange}
         />
 
-        {/* EDIT PANEL - BOTTOM BAR */}
         <div
           id="edit-panel"
           style={{
