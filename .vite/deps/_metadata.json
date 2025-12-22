@@ -1,0 +1,58 @@
+{
+  "hash": "2d86161d",
+  "configHash": "e8eeb417",
+  "lockfileHash": "227c3385",
+  "browserHash": "4a51608c",
+  "optimized": {
+    "@use-gesture/react": {
+      "src": "../../node_modules/@use-gesture/react/dist/use-gesture-react.esm.js",
+      "file": "@use-gesture_react.js",
+      "fileHash": "604731e4",
+      "needsInterop": false
+    },
+    "file-saver": {
+      "src": "../../node_modules/file-saver/dist/FileSaver.min.js",
+      "file": "file-saver.js",
+      "fileHash": "85e1e4af",
+      "needsInterop": true
+    },
+    "react-dom/client": {
+      "src": "../../node_modules/react-dom/client.js",
+      "file": "react-dom_client.js",
+      "fileHash": "230f357a",
+      "needsInterop": true
+    },
+    "react-konva": {
+      "src": "../../node_modules/react-konva/es/ReactKonva.js",
+      "file": "react-konva.js",
+      "fileHash": "74ed2e0b",
+      "needsInterop": false
+    },
+    "react": {
+      "src": "../../node_modules/react/index.js",
+      "file": "react.js",
+      "fileHash": "643d43b5",
+      "needsInterop": true
+    },
+    "react/jsx-dev-runtime": {
+      "src": "../../node_modules/react/jsx-dev-runtime.js",
+      "file": "react_jsx-dev-runtime.js",
+      "fileHash": "60a6e452",
+      "needsInterop": true
+    }
+  },
+  "chunks": {
+    "chunk-DUEDWNxO": {
+      "file": "chunk-DUEDWNxO.js",
+      "isDynamicEntry": false
+    },
+    "react-x9Y-BYRK": {
+      "file": "react-x9Y-BYRK.js",
+      "isDynamicEntry": false
+    },
+    "scheduler-B-g-56jt": {
+      "file": "scheduler-B-g-56jt.js",
+      "isDynamicEntry": false
+    }
+  }
+}
