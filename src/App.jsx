@@ -292,6 +292,16 @@ function App() {
     setOffset({ x: 50, y: 0 })
   }
 
+  // === TÍNH NĂNG MỚI: XÓA SẠCH TẤT CẢ NẾN ===
+  const clearAllCandles = () => {
+    if (window.confirm('Bạn có chắc muốn xóa sạch tất cả các nến không?\nHành động này không thể hoàn tác.')) {
+      setCandles([])
+      setSelectedIndex(null)
+      setIsPanelOpen(false)
+      alert('Đã xóa sạch biểu đồ! Bạn có thể bắt đầu thiết kế lại từ đầu.')
+    }
+  }
+
   const bind = useGesture({
     onDrag: ({ offset: [dx, dy] }) => {
       if (window.altKey) {
@@ -407,6 +417,19 @@ function App() {
           </button>
           <button onClick={exportPNG} style={btnStyle}>
             🖼️ Export PNG
+          </button>
+          {/* BUTTON MỚI: Thiết kế lại */}
+          <button
+            onClick={clearAllCandles}
+            style={{
+              ...btnStyle,
+              background: '#b71c1c',
+              marginLeft: '15px',
+            }}
+            onMouseOver={(e) => e.target.style.background = '#c62828'}
+            onMouseOut={(e) => e.target.style.background = '#b71c1c'}
+          >
+            🔄 Thiết kế lại
           </button>
         </div>
         <p style={{ margin: '10px 0', fontSize: '14px' }}>
