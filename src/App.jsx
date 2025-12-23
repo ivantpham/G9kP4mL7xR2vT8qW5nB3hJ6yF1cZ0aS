@@ -48,7 +48,7 @@ function LoginScreen({ onLoginSuccess }) {
   ]
 
   const requiredUsername = 'PriceAction'
-  const correctPasswordHash = 'Y2Njenhjeg==' // base64 của "abc123" hoặc tương tự
+  const correctPasswordHash = 'Y2Njenhjeg==' // base64 của "abc123"
 
   const handleLogin = () => {
     setError('')
@@ -139,7 +139,7 @@ function App() {
   const headerRef = useRef()
   const fileInputRef = useRef()
   const animationFrame = useRef()
-  const updateTimeout = useRef(null) // Để debounce
+  const updateTimeout = useRef(null)
 
   const [stageSize, setStageSize] = useState({ width: 800, height: 600 })
 
@@ -191,10 +191,10 @@ function App() {
 
   const addCandle = (type) => {
     let openPrice = candles.length > 0 ? candles[candles.length - 1].close : 100 + Math.random() * 50
-    const variation = 10 + Math.random() * 20
+    const variation = 60 + Math.random() * 120;  // ← TĂNG GẤP 3 LẦN (trước là 10 + random*20)
     const close = type === 'bull' ? openPrice + variation : openPrice - variation
-    const high = Math.max(openPrice, close) + Math.random() * 8
-    const low = Math.min(openPrice, close) - Math.random() * 8
+    const high = Math.max(openPrice, close) + Math.random() * 24  // Tăng bấc lên cho cân đối
+    const low = Math.min(openPrice, close) - Math.random() * 24
 
     setCandles(prev => [...prev, { open: openPrice, high, low, close }])
     setSelectedIndex(null)
@@ -221,7 +221,7 @@ function App() {
 
     if (!allowEditOpen) {
       valid.open = candles[selectedIndex].open
-      editValues.open = valid.open // Đồng bộ lại giá trị hiển thị
+      editValues.open = valid.open
     }
 
     let newCandles = [...candles]
@@ -247,7 +247,7 @@ function App() {
     if (updateTimeout.current) clearTimeout(updateTimeout.current)
     updateTimeout.current = setTimeout(() => {
       updateCandle()
-    }, 50) // Delay 50ms để debounce
+    }, 50)
   }
 
   const closePanel = () => {
@@ -370,15 +370,15 @@ function App() {
     saveAs(uri, 'chart.png')
   }
 
+  // SCALE CỐ ĐỊNH
   const priceToY = (price) => {
-    const allPrices = candles.length > 0 ? candles.flatMap(c => [c.high, c.low]) : [200, 0]
-    const maxPrice = Math.max(...allPrices, 200)
-    const minPrice = Math.min(...allPrices, 0)
-    const range = maxPrice - minPrice || 100
-    const paddedRange = range * 1.2
-    const centerPrice = (maxPrice + minPrice) / 2
-    return ((centerPrice - price) / paddedRange) * stageSize.height + stageSize.height / 2
-  }
+    const fixedMinPrice = -600;
+    const fixedMaxPrice = 600;
+    const priceRange = fixedMaxPrice - fixedMinPrice;
+
+    const normalized = (fixedMaxPrice - price) / priceRange;
+    return normalized * stageSize.height;
+  };
 
   if (!isAuthenticated) return <LoginScreen onLoginSuccess={() => setIsAuthenticated(true)} />
 
@@ -483,7 +483,10 @@ function App() {
                 </label>
                 <input
                   type="range"
-                  min="0" max="600" step="0.1" value={editValues.open || 100}
+                  min="-600"
+                  max="600"
+                  step="0.1"
+                  value={editValues.open || 0}
                   disabled={!allowEditOpen}
                   onChange={e => {
                     setEditValues(prev => ({ ...prev, open: parseFloat(e.target.value) }))
@@ -498,7 +501,10 @@ function App() {
                 </label>
                 <input
                   type="range"
-                  min="0" max="600" step="0.1" value={editValues.high || 100}
+                  min="-600"
+                  max="600"
+                  step="0.1"
+                  value={editValues.high || 0}
                   onChange={e => {
                     setEditValues(prev => ({ ...prev, high: parseFloat(e.target.value) }))
                     debouncedUpdate()
@@ -515,7 +521,10 @@ function App() {
                 </label>
                 <input
                   type="range"
-                  min="0" max="600" step="0.1" value={editValues.low || 100}
+                  min="-600"
+                  max="600"
+                  step="0.1"
+                  value={editValues.low || 0}
                   onChange={e => {
                     setEditValues(prev => ({ ...prev, low: parseFloat(e.target.value) }))
                     debouncedUpdate()
@@ -529,7 +538,10 @@ function App() {
                 </label>
                 <input
                   type="range"
-                  min="0" max="600" step="0.1" value={editValues.close || 100}
+                  min="-600"
+                  max="600"
+                  step="0.1"
+                  value={editValues.close || 0}
                   onChange={e => {
                     setEditValues(prev => ({ ...prev, close: parseFloat(e.target.value) }))
                     debouncedUpdate()
