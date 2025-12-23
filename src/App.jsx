@@ -341,11 +341,10 @@ function App() {
     setIsPanelOpen(false)
   }
 
-  // === XOÁ NẾN ĐÃ CHỌN - VỚI BẢO TOÀN LIÊN TỤC BẰNG CÁCH DỊCH CHUYỂN TOÀN BỘ NẾN BÊN PHẢI ===
+  // === XOÁ NẾN ĐÃ CHỌN ===
   const deleteSelectedCandle = () => {
     if (selectedIndex === null) return
 
-    // Nếu là nến cuối cùng → chỉ xóa, không cần shift
     if (selectedIndex === candles.length - 1) {
       setCandles(prev => prev.filter((_, i) => i !== selectedIndex))
       setSelectedIndex(null)
@@ -353,22 +352,16 @@ function App() {
       return
     }
 
-    // Lấy close của nến bên trái (nếu có nến bên trái)
     const leftClose = selectedIndex > 0
       ? candles[selectedIndex - 1].close
-      : candles[selectedIndex + 1].open  // trường hợp xóa nến đầu tiên
+      : candles[selectedIndex + 1].open
 
-    // Open hiện tại của nến bên phải (nến ngay sau nến bị xóa)
     const rightOpen = candles[selectedIndex + 1].open
-
-    // Delta cần dịch chuyển toàn bộ các nến bên phải để nối liền
     const delta = leftClose - rightOpen
 
-    // Tạo mảng mới: xóa nến selectedIndex và dịch chuyển các nến bên phải
     const newCandles = candles
       .filter((_, i) => i !== selectedIndex)
       .map((candle, newIndex) => {
-        // Nếu nến này vốn nằm bên phải nến bị xóa (newIndex >= selectedIndex)
         if (newIndex >= selectedIndex) {
           return {
             open: candle.open + delta,
@@ -380,10 +373,33 @@ function App() {
         return candle
       })
 
-    // Đảm bảo liên tục (dự phòng)
     const continuousCandles = ensureContinuity(newCandles)
 
     setCandles(continuousCandles)
+    setSelectedIndex(null)
+    setIsPanelOpen(false)
+  }
+
+  // === COPY NẾN (TÍNH NĂNG MỚI) ===
+  const copySelectedCandle = () => {
+    if (selectedIndex === null) return
+
+    const selectedCandle = candles[selectedIndex]
+    const deltaHigh = selectedCandle.high - selectedCandle.open
+    const deltaLow = selectedCandle.low - selectedCandle.open
+    const deltaClose = selectedCandle.close - selectedCandle.open
+
+    const lastClose = candles.length > 0 ? candles[candles.length - 1].close : selectedCandle.close
+    const newOpen = lastClose
+
+    const newCandle = {
+      open: newOpen,
+      high: newOpen + deltaHigh,
+      low: newOpen + deltaLow,
+      close: newOpen + deltaClose,
+    }
+
+    setCandles(prev => [...prev, newCandle])
     setSelectedIndex(null)
     setIsPanelOpen(false)
   }
@@ -745,6 +761,7 @@ function App() {
           <div style={{
             display: 'flex',
             justifyContent: 'center',
+            gap: '30px',
             marginTop: '30px',
             paddingTop: '20px',
             borderTop: '1px solid #444'
@@ -760,6 +777,19 @@ function App() {
               title="Xoá nến này"
             >
               🗑️ Xoá nến
+            </button>
+
+            <button
+              onClick={copySelectedCandle}
+              disabled={selectedIndex === null}
+              style={{
+                ...actionBtnStyle,
+                background: '#1976d2',
+                opacity: selectedIndex !== null ? 1 : 0.5,
+              }}
+              title="Sao chép hình dạng nến này và thêm nến mới"
+            >
+              📋 Copy Nến
             </button>
           </div>
         </div>
