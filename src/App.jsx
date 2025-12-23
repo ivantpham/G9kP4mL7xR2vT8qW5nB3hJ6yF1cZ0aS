@@ -290,7 +290,6 @@ function App() {
     setOffset({ x: 50, y: 0 })
   }
 
-  // === TÍNH NĂNG MỚI: XÓA SẠCH TẤT CẢ NẾN ===
   const clearAllCandles = () => {
     if (window.confirm('Bạn có chắc muốn xóa sạch tất cả các nến không?\nHành động này không thể hoàn tác.')) {
       setCandles([])
@@ -368,12 +367,10 @@ function App() {
     return ((centerPrice - price) / paddedRange) * stageSize.height + stageSize.height / 2
   }
 
-  // Nếu chưa đăng nhập → hiện màn hình login
   if (!isAuthenticated) {
     return <LoginScreen onLoginSuccess={() => setIsAuthenticated(true)} />
   }
 
-  // Đã đăng nhập → hiện ứng dụng chính
   return (
     <div
       style={{
@@ -400,89 +397,94 @@ function App() {
         }}
       >
         <h1 style={{ margin: '0 0 15px 0' }}>CandleCreator</h1>
-        <div style={{ margin: '15px 0' }}>
-          <button onClick={() => addCandle('bull')} style={btnStyle}>
-            🟢 Add Bull
-          </button>
-          <button onClick={() => addCandle('bear')} style={btnStyle}>
-            🔴 Add Bear
-          </button>
-          <button onClick={saveData} style={btnStyle}>
-            💾 Save Data
-          </button>
-          <button onClick={openData} style={btnStyle}>
-            📂 Open Data
-          </button>
-          <button onClick={exportPNG} style={btnStyle}>
-            🖼️ Export PNG
-          </button>
-          {/* BUTTON MỚI: Thiết kế lại */}
+
+        {/* Dòng chính: Zoom bên trái - Buttons ở giữa - Màu bên phải */}
+        <div style={{
+          margin: '15px 0',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '20px',
+        }}>
+          {/* Bên trái: Nút Zoom */}
           <button
-            onClick={clearAllCandles}
+            onClick={resetZoom}
             style={{
-              ...btnStyle,
-              background: '#b71c1c',
-              marginLeft: '15px',
+              fontSize: '24px',
+              fontWeight: 'bold',
+              padding: '12px 30px',
+              background: '#444',
+              color: '#fff',
+              border: '2px solid #666',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              minWidth: '120px',
+              marginLeft: '20px', // cách mép trái một chút cho đẹp
             }}
-            onMouseOver={(e) => e.target.style.background = '#c62828'}
-            onMouseOut={(e) => e.target.style.background = '#b71c1c'}
+            onMouseOver={(e) => e.target.style.background = '#555'}
+            onMouseOut={(e) => e.target.style.background = '#444'}
           >
-            🔄 Thiết kế lại
+            {Math.round(scale * 100)}%
           </button>
-        </div>
-        <p style={{ margin: '10px 0', fontSize: '14px' }}>
-          Click vào nến để chỉnh sửa • Drag nến để di chuyển toàn bộ • Alt + Drag để pan • Scroll để zoom
-        </p>
 
-        <button
-          onClick={resetZoom}
-          style={{
-            fontSize: '24px',
-            fontWeight: 'bold',
-            padding: '12px 30px',
-            margin: '15px 0',
-            background: '#444',
-            color: '#fff',
-            border: '2px solid #666',
-            borderRadius: '10px',
-            cursor: 'pointer',
-            minWidth: '120px',
-          }}
-          onMouseOver={(e) => e.target.style.background = '#555'}
-          onMouseOut={(e) => e.target.style.background = '#444'}
-        >
-          {Math.round(scale * 100)}%
-        </button>
-
-        <div style={{ margin: '20px 0', display: 'flex', justifyContent: 'center', gap: '20px', flexWrap: 'wrap' }}>
-          <div style={{ textAlign: 'center' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>Nền biểu đồ</label>
-            <input
-              type="color"
-              value={chartBgColor}
-              onChange={(e) => setChartBgColor(e.target.value)}
-              style={{ width: '60px', height: '40px', cursor: 'pointer', border: 'none', borderRadius: '6px' }}
-            />
+          {/* Giữa: Các button chức năng */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            flexWrap: 'wrap',
+            gap: '12px',
+            flex: '1',
+          }}>
+            <button onClick={() => addCandle('bull')} style={btnStyle}>🟢 Add Bull</button>
+            <button onClick={() => addCandle('bear')} style={btnStyle}>🔴 Add Bear</button>
+            <button onClick={saveData} style={btnStyle}>💾 Save Data</button>
+            <button onClick={openData} style={btnStyle}>📂 Open Data</button>
+            <button onClick={exportPNG} style={btnStyle}>🖼️ Export PNG</button>
+            <button
+              onClick={clearAllCandles}
+              style={{ ...btnStyle, background: '#b71c1c' }}
+              onMouseOver={(e) => e.target.style.background = '#c62828'}
+              onMouseOut={(e) => e.target.style.background = '#b71c1c'}
+            >
+              🔄 Thiết kế lại
+            </button>
           </div>
 
-          <div style={{ textAlign: 'center' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>Nến tăng</label>
-            <input
-              type="color"
-              value={bullColor}
-              onChange={(e) => setBullColor(e.target.value)}
-              style={{ width: '60px', height: '40px', cursor: 'pointer', border: 'none', borderRadius: '6px' }}
-            />
-          </div>
-
-          <div style={{ textAlign: 'center' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>Nến giảm</label>
-            <input
-              type="color"
-              value={bearColor}
-              onChange={(e) => setBearColor(e.target.value)}
-              style={{ width: '60px', height: '40px', cursor: 'pointer', border: 'none', borderRadius: '6px' }}
-            />
+          {/* Bên phải: Các ô chọn màu */}
+          <div style={{
+            display: 'flex',
+            gap: '20px',
+            alignItems: 'center',
+            marginRight: '20px', // cách mép phải một chút
+          }}>
+            <div style={{ textAlign: 'center' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#aaa' }}>Nền biểu đồ</label>
+              <input
+                type="color"
+                value={chartBgColor}
+                onChange={(e) => setChartBgColor(e.target.value)}
+                style={{ width: '60px', height: '40px', cursor: 'pointer', border: 'none', borderRadius: '6px' }}
+              />
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#aaa' }}>Nến tăng</label>
+              <input
+                type="color"
+                value={bullColor}
+                onChange={(e) => setBullColor(e.target.value)}
+                style={{ width: '60px', height: '40px', cursor: 'pointer', border: 'none', borderRadius: '6px' }}
+              />
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#aaa' }}>Nến giảm</label>
+              <input
+                type="color"
+                value={bearColor}
+                onChange={(e) => setBearColor(e.target.value)}
+                style={{ width: '60px', height: '40px', cursor: 'pointer', border: 'none', borderRadius: '6px' }}
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -621,7 +623,6 @@ function App() {
 }
 
 const btnStyle = {
-  margin: '0 10px',
   padding: '10px 20px',
   fontSize: '16px',
   cursor: 'pointer',
