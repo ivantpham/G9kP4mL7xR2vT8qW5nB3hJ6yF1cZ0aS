@@ -3,7 +3,7 @@ import { Stage, Layer, Rect, Line } from 'react-konva'
 import { useGesture } from '@use-gesture/react'
 import { saveAs } from 'file-saver'
 
-function Candle({ x, open, high, low, close, width = 20, priceToY, onClick, isSelected, bullColor, bearColor }) {
+function Candle({ x, open, high, low, close, width = 12, priceToY, onClick, isSelected, bullColor, bearColor }) {
   const isBull = close >= open
   const bodyTop = priceToY(Math.max(open, close))
   const bodyBottom = priceToY(Math.min(open, close))
@@ -177,7 +177,7 @@ function App() {
 
   useEffect(() => {
     const updateSize = () => {
-      const headerHeight = headerRef.current?.offsetHeight || 140 // Giảm để khớp với header nhỏ hơn
+      const headerHeight = headerRef.current?.offsetHeight || 140
       setStageSize({ width: window.innerWidth, height: window.innerHeight - headerHeight })
     }
     updateSize()
@@ -425,7 +425,7 @@ function App() {
         <Stage width={stageSize.width} height={stageSize.height} scaleX={scale} scaleY={scale} x={offset.x} y={offset.y} ref={stageRef}>
           <Layer>
             {candles.map((c, i) => {
-              const candleX = 100 + i * 34
+              const candleX = 100 + i * 22; // ← ĐÃ GIẢM 50% KHOẢNG CÁCH
               return (
                 <Candle
                   key={i}
