@@ -180,9 +180,7 @@ function LoginScreen({ onLoginSuccess }) {
           Đăng nhập
         </button>
 
-        <p style={{ marginTop: '20px', fontSize: '12px', color: '#777' }}>
-          Gợi ý: Chỉ tên <strong>PriceAction</strong> mới được chấp nhận
-        </p>
+
       </div>
     </div>
   )
