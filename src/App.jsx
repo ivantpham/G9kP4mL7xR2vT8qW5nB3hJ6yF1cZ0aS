@@ -290,12 +290,19 @@ function App() {
     setOffset({ x: 50, y: 0 })
   }
 
+  // === HÀM MỚI: Thiết kế lại (xóa hết + reset màu) ===
   const clearAllCandles = () => {
     if (window.confirm('Bạn có chắc muốn xóa sạch tất cả các nến không?\nHành động này không thể hoàn tác.')) {
       setCandles([])
       setSelectedIndex(null)
       setIsPanelOpen(false)
-      alert('Đã xóa sạch biểu đồ! Bạn có thể bắt đầu thiết kế lại từ đầu.')
+
+      // Reset màu về mặc định
+      setChartBgColor('#000000')
+      setBullColor('#26a69a')
+      setBearColor('#ef5350')
+
+      alert('Đã xóa sạch biểu đồ và reset màu sắc về mặc định! Bạn có thể bắt đầu thiết kế lại từ đầu.')
     }
   }
 
@@ -420,7 +427,7 @@ function App() {
               borderRadius: '10px',
               cursor: 'pointer',
               minWidth: '120px',
-              marginLeft: '20px', // cách mép trái một chút cho đẹp
+              marginLeft: '20px',
             }}
             onMouseOver={(e) => e.target.style.background = '#555'}
             onMouseOut={(e) => e.target.style.background = '#444'}
@@ -456,7 +463,7 @@ function App() {
             display: 'flex',
             gap: '20px',
             alignItems: 'center',
-            marginRight: '20px', // cách mép phải một chút
+            marginRight: '20px',
           }}>
             <div style={{ textAlign: 'center' }}>
               <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#aaa' }}>Nền biểu đồ</label>
