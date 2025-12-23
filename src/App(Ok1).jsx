@@ -48,29 +48,43 @@ function LoginScreen({ onLoginSuccess }) {
   ]
 
   const requiredUsername = 'PriceAction'
-  const correctPasswordHash = 'Y2Njenhjeg==' // base64 của "abc123" hoặc tương tự
+  const correctPasswordHash = 'Y2Njenhjeg=='
 
   const handleLogin = () => {
     setError('')
+    console.log('=== Bắt đầu kiểm tra đăng nhập ===');
+    console.log('Username nhập:', selectedUser);
+    console.log('Password nhập:', password);
+    console.log('Password nhập sau btoa():', btoa(password));
+    console.log('Hash đúng (correctPasswordHash):', correctPasswordHash);
+
     if (!selectedUser) {
       setError('Vui lòng chọn tên người dùng')
+      console.log('Lỗi: Chưa chọn username')
       return
     }
     if (selectedUser !== requiredUsername) {
       setError('Tên người dùng không hợp lệ!')
+      console.log('Lỗi: Username không phải PriceAction')
       return
     }
     if (!password) {
       setError('Vui lòng nhập mật khẩu')
+      console.log('Lỗi: Chưa nhập password')
       return
     }
 
     const computedHash = btoa(password)
+    console.log('So sánh hash: computedHash === correctPasswordHash ?', computedHash === correctPasswordHash)
+
     if (computedHash === correctPasswordHash) {
+      console.log('Đăng nhập thành công!')
       onLoginSuccess()
     } else {
       setError('Mật khẩu không đúng!')
+      console.log('Lỗi: Mật khẩu không khớp')
     }
+    console.log('=== Kết thúc kiểm tra đăng nhập ===')
   }
 
   return (
@@ -139,7 +153,6 @@ function App() {
   const headerRef = useRef()
   const fileInputRef = useRef()
   const animationFrame = useRef()
-  const updateTimeout = useRef(null) // Để debounce
 
   const [stageSize, setStageSize] = useState({ width: 800, height: 600 })
 
@@ -221,7 +234,6 @@ function App() {
 
     if (!allowEditOpen) {
       valid.open = candles[selectedIndex].open
-      editValues.open = valid.open // Đồng bộ lại giá trị hiển thị
     }
 
     let newCandles = [...candles]
@@ -241,13 +253,7 @@ function App() {
 
     newCandles = ensureContinuity(newCandles)
     setCandles(newCandles)
-  }
-
-  const debouncedUpdate = () => {
-    if (updateTimeout.current) clearTimeout(updateTimeout.current)
-    updateTimeout.current = setTimeout(() => {
-      updateCandle()
-    }, 50) // Delay 50ms để debounce
+    setEditValues({ ...valid })
   }
 
   const closePanel = () => {
@@ -393,12 +399,12 @@ function App() {
           </button>
 
           <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '10px', flex: '1' }}>
-            <button onClick={() => addCandle('bull')} style={{ padding: '9px 18px', fontSize: '15px', cursor: 'pointer', background: '#444', color: '#fff', border: 'none', borderRadius: '6px' }}>🟢 Add Bull</button>
-            <button onClick={() => addCandle('bear')} style={{ padding: '9px 18px', fontSize: '15px', cursor: 'pointer', background: '#444', color: '#fff', border: 'none', borderRadius: '6px' }}>🔴 Add Bear</button>
-            <button onClick={saveData} style={{ padding: '9px 18px', fontSize: '15px', cursor: 'pointer', background: '#444', color: '#fff', border: 'none', borderRadius: '6px' }}>💾 Save Data</button>
-            <button onClick={openData} style={{ padding: '9px 18px', fontSize: '15px', cursor: 'pointer', background: '#444', color: '#fff', border: 'none', borderRadius: '6px' }}>📂 Open Data</button>
-            <button onClick={exportPNG} style={{ padding: '9px 18px', fontSize: '15px', cursor: 'pointer', background: '#444', color: '#fff', border: 'none', borderRadius: '6px' }}>🖼️ Export PNG</button>
-            <button onClick={clearAllCandles} style={{ background: '#b71c1c', padding: '9px 18px', fontSize: '15px', cursor: 'pointer', color: '#fff', border: 'none', borderRadius: '6px' }}
+            <button onClick={() => addCandle('bull')} style={{ ...btnStyle, padding: '9px 18px', fontSize: '15px' }}>🟢 Add Bull</button>
+            <button onClick={() => addCandle('bear')} style={{ ...btnStyle, padding: '9px 18px', fontSize: '15px' }}>🔴 Add Bear</button>
+            <button onClick={saveData} style={{ ...btnStyle, padding: '9px 18px', fontSize: '15px' }}>💾 Save Data</button>
+            <button onClick={openData} style={{ ...btnStyle, padding: '9px 18px', fontSize: '15px' }}>📂 Open Data</button>
+            <button onClick={exportPNG} style={{ ...btnStyle, padding: '9px 18px', fontSize: '15px' }}>🖼️ Export PNG</button>
+            <button onClick={clearAllCandles} style={{ ...btnStyle, background: '#b71c1c', padding: '9px 18px', fontSize: '15px' }}
               onMouseOver={e => e.target.style.background = '#c62828'} onMouseOut={e => e.target.style.background = '#b71c1c'}>
               🔄 Thiết kế lại
             </button>
@@ -419,7 +425,7 @@ function App() {
         <Stage width={stageSize.width} height={stageSize.height} scaleX={scale} scaleY={scale} x={offset.x} y={offset.y} ref={stageRef}>
           <Layer>
             {candles.map((c, i) => {
-              const candleX = 100 + i * 22
+              const candleX = 100 + i * 22; // ← ĐÃ GIẢM 50% KHOẢNG CÁCH
               return (
                 <Candle
                   key={i}
@@ -485,26 +491,19 @@ function App() {
                   type="range"
                   min="0" max="600" step="0.1" value={editValues.open || 100}
                   disabled={!allowEditOpen}
-                  onChange={e => {
-                    setEditValues(prev => ({ ...prev, open: parseFloat(e.target.value) }))
-                    debouncedUpdate()
-                  }}
-                  style={{ width: '100%', borderRadius: '6px', background: '#444', outline: 'none', appearance: 'none', opacity: allowEditOpen ? 1 : 0.5, cursor: allowEditOpen ? 'pointer' : 'not-allowed', height: '9px' }}
+                  onChange={e => setEditValues(prev => ({ ...prev, open: parseFloat(e.target.value) }))}
+                  onMouseUp={updateCandle} onTouchEnd={updateCandle}
+                  style={{ ...sliderStyle, opacity: allowEditOpen ? 1 : 0.5, cursor: allowEditOpen ? 'pointer' : 'not-allowed', height: '9px' }}
                 />
               </div>
               <div style={{ marginBottom: '15px' }}>
                 <label style={{ display: 'block', marginBottom: '5px', color: '#4caf50', fontSize: '14px', fontWeight: 'bold' }}>
                   HIGH: <strong style={{ color: '#fff' }}>{editValues.high?.toFixed(2)}</strong>
                 </label>
-                <input
-                  type="range"
-                  min="0" max="600" step="0.1" value={editValues.high || 100}
-                  onChange={e => {
-                    setEditValues(prev => ({ ...prev, high: parseFloat(e.target.value) }))
-                    debouncedUpdate()
-                  }}
-                  style={{ width: '100%', borderRadius: '6px', background: '#444', outline: 'none', appearance: 'none', height: '9px' }}
-                />
+                <input type="range" min="0" max="600" step="0.1" value={editValues.high || 100}
+                  onChange={e => setEditValues(prev => ({ ...prev, high: parseFloat(e.target.value) }))}
+                  onMouseUp={updateCandle} onTouchEnd={updateCandle}
+                  style={{ ...sliderStyle, height: '9px' }} />
               </div>
             </div>
 
@@ -513,39 +512,29 @@ function App() {
                 <label style={{ display: 'block', marginBottom: '5px', color: '#ff5722', fontSize: '14px', fontWeight: 'bold' }}>
                   LOW: <strong style={{ color: '#fff' }}>{editValues.low?.toFixed(2)}</strong>
                 </label>
-                <input
-                  type="range"
-                  min="0" max="600" step="0.1" value={editValues.low || 100}
-                  onChange={e => {
-                    setEditValues(prev => ({ ...prev, low: parseFloat(e.target.value) }))
-                    debouncedUpdate()
-                  }}
-                  style={{ width: '100%', borderRadius: '6px', background: '#444', outline: 'none', appearance: 'none', height: '9px' }}
-                />
+                <input type="range" min="0" max="600" step="0.1" value={editValues.low || 100}
+                  onChange={e => setEditValues(prev => ({ ...prev, low: parseFloat(e.target.value) }))}
+                  onMouseUp={updateCandle} onTouchEnd={updateCandle}
+                  style={{ ...sliderStyle, height: '9px' }} />
               </div>
               <div style={{ marginBottom: '15px' }}>
                 <label style={{ display: 'block', marginBottom: '5px', color: '#e91e63', fontSize: '14px', fontWeight: 'bold' }}>
                   CLOSE: <strong style={{ color: '#fff' }}>{editValues.close?.toFixed(2)}</strong>
                 </label>
-                <input
-                  type="range"
-                  min="0" max="600" step="0.1" value={editValues.close || 100}
-                  onChange={e => {
-                    setEditValues(prev => ({ ...prev, close: parseFloat(e.target.value) }))
-                    debouncedUpdate()
-                  }}
-                  style={{ width: '100%', borderRadius: '6px', background: '#444', outline: 'none', appearance: 'none', height: '9px' }}
-                />
+                <input type="range" min="0" max="600" step="0.1" value={editValues.close || 100}
+                  onChange={e => setEditValues(prev => ({ ...prev, close: parseFloat(e.target.value) }))}
+                  onMouseUp={updateCandle} onTouchEnd={updateCandle}
+                  style={{ ...sliderStyle, height: '9px' }} />
               </div>
             </div>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginTop: '15px', paddingTop: '10px', borderTop: '1px solid #444' }}>
             <button onClick={deleteSelectedCandle} disabled={selectedIndex === null}
-              style={{ fontWeight: 'bold', color: '#fff', border: 'none', borderRadius: '8px', cursor: selectedIndex !== null ? 'pointer' : 'not-allowed', minWidth: '160px', padding: '8px 18px', background: '#d32f2f', opacity: selectedIndex !== null ? 1 : 0.5 }}
+              style={{ ...actionBtnStyle, background: '#d32f2f', opacity: selectedIndex !== null ? 1 : 0.5, padding: '8px 18px', fontSize: '14px' }}
               title="Xoá nến">🗑️ Xoá nến</button>
             <button onClick={copySelectedCandle} disabled={selectedIndex === null}
-              style={{ fontWeight: 'bold', color: '#fff', border: 'none', borderRadius: '8px', cursor: selectedIndex !== null ? 'pointer' : 'not-allowed', minWidth: '160px', padding: '8px 18px', background: '#1976d2', opacity: selectedIndex !== null ? 1 : 0.5 }}
+              style={{ ...actionBtnStyle, background: '#1976d2', opacity: selectedIndex !== null ? 1 : 0.5, padding: '8px 18px', fontSize: '14px' }}
               title="Sao chép nến">📋 Copy Nến</button>
           </div>
         </div>
@@ -553,5 +542,9 @@ function App() {
     </div>
   )
 }
+
+const btnStyle = { padding: '10px 20px', fontSize: '16px', cursor: 'pointer', background: '#444', color: '#fff', border: 'none', borderRadius: '6px' }
+const actionBtnStyle = { fontWeight: 'bold', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', minWidth: '160px' }
+const sliderStyle = { width: '100%', borderRadius: '6px', background: '#444', outline: 'none', appearance: 'none' }
 
 export default App
