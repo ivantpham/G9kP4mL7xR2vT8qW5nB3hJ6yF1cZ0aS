@@ -179,8 +179,6 @@ function LoginScreen({ onLoginSuccess }) {
         >
           Đăng nhập
         </button>
-
-
       </div>
     </div>
   )
@@ -192,7 +190,10 @@ function App() {
 
   const [candles, setCandles] = useState([])
   const [scale, setScale] = useState(1)
+
   const [offset, setOffset] = useState({ x: 50, y: 0 })
+  const targetOffset = useRef({ x: 50, y: 0 })
+
   const [selectedIndex, setSelectedIndex] = useState(null)
   const [editValues, setEditValues] = useState({ open: 100, high: 110, low: 90, close: 105 })
   const [isPanelOpen, setIsPanelOpen] = useState(false)
@@ -205,8 +206,39 @@ function App() {
   const stageContainerRef = useRef()
   const headerRef = useRef()
   const fileInputRef = useRef()
+  const animationFrame = useRef()
 
   const [stageSize, setStageSize] = useState({ width: 800, height: 600 })
+
+  // === SMOOTH PAN ANIMATION ===
+  useEffect(() => {
+    const animate = () => {
+      setOffset(prev => {
+        const dx = targetOffset.current.x - prev.x
+        const dy = targetOffset.current.y - prev.y
+        const easing = 0.12
+
+        const newX = prev.x + dx * easing
+        const newY = prev.y + dy * easing
+
+        if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) {
+          return { x: targetOffset.current.x, y: targetOffset.current.y }
+        }
+
+        return { x: newX, y: newY }
+      })
+
+      animationFrame.current = requestAnimationFrame(animate)
+    }
+
+    animationFrame.current = requestAnimationFrame(animate)
+
+    return () => {
+      if (animationFrame.current) {
+        cancelAnimationFrame(animationFrame.current)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     const updateSize = () => {
@@ -222,6 +254,26 @@ function App() {
     return () => window.removeEventListener('resize', updateSize)
   }, [])
 
+  // === ĐẢM BẢO TÍNH LIÊN TỤC GIỮA CÁC NẾN ===
+  const ensureContinuity = (newCandles) => {
+    if (newCandles.length < 2) return newCandles
+
+    const updated = [...newCandles]
+    for (let i = 1; i < updated.length; i++) {
+      const prevClose = updated[i - 1].close
+      if (updated[i].open !== prevClose) {
+        updated[i] = {
+          ...updated[i],
+          open: prevClose,
+          high: Math.max(prevClose, updated[i].high, updated[i].close),
+          low: Math.min(prevClose, updated[i].low, updated[i].close),
+        }
+      }
+    }
+    return updated
+  }
+
+  // === THÊM NẾN MỚI ===
   const addCandle = (type) => {
     let openPrice
 
@@ -239,7 +291,9 @@ function App() {
     const high = Math.max(openPrice, close) + Math.random() * 8
     const low = Math.min(openPrice, close) - Math.random() * 8
 
-    setCandles([...candles, { open: openPrice, high, low, close }])
+    const newCandle = { open: openPrice, high, low, close }
+
+    setCandles(prev => [...prev, newCandle])
     setSelectedIndex(null)
     setIsPanelOpen(false)
   }
@@ -276,7 +330,9 @@ function App() {
       low: Math.min(editValues.low, Math.min(editValues.open, editValues.close)),
     }
 
-    setCandles(candles.map((c, i) => (i === selectedIndex ? valid : c)))
+    const newCandles = candles.map((c, i) => (i === selectedIndex ? valid : c))
+
+    setCandles(ensureContinuity(newCandles))
     setEditValues(valid)
   }
 
@@ -285,19 +341,65 @@ function App() {
     setIsPanelOpen(false)
   }
 
+  // === XOÁ NẾN ĐÃ CHỌN - VỚI BẢO TOÀN LIÊN TỤC BẰNG CÁCH DỊCH CHUYỂN TOÀN BỘ NẾN BÊN PHẢI ===
+  const deleteSelectedCandle = () => {
+    if (selectedIndex === null) return
+
+    // Nếu là nến cuối cùng → chỉ xóa, không cần shift
+    if (selectedIndex === candles.length - 1) {
+      setCandles(prev => prev.filter((_, i) => i !== selectedIndex))
+      setSelectedIndex(null)
+      setIsPanelOpen(false)
+      return
+    }
+
+    // Lấy close của nến bên trái (nếu có nến bên trái)
+    const leftClose = selectedIndex > 0
+      ? candles[selectedIndex - 1].close
+      : candles[selectedIndex + 1].open  // trường hợp xóa nến đầu tiên
+
+    // Open hiện tại của nến bên phải (nến ngay sau nến bị xóa)
+    const rightOpen = candles[selectedIndex + 1].open
+
+    // Delta cần dịch chuyển toàn bộ các nến bên phải để nối liền
+    const delta = leftClose - rightOpen
+
+    // Tạo mảng mới: xóa nến selectedIndex và dịch chuyển các nến bên phải
+    const newCandles = candles
+      .filter((_, i) => i !== selectedIndex)
+      .map((candle, newIndex) => {
+        // Nếu nến này vốn nằm bên phải nến bị xóa (newIndex >= selectedIndex)
+        if (newIndex >= selectedIndex) {
+          return {
+            open: candle.open + delta,
+            high: candle.high + delta,
+            low: candle.low + delta,
+            close: candle.close + delta,
+          }
+        }
+        return candle
+      })
+
+    // Đảm bảo liên tục (dự phòng)
+    const continuousCandles = ensureContinuity(newCandles)
+
+    setCandles(continuousCandles)
+    setSelectedIndex(null)
+    setIsPanelOpen(false)
+  }
+
   const resetZoom = () => {
     setScale(1)
+    targetOffset.current = { x: 50, y: 0 }
     setOffset({ x: 50, y: 0 })
   }
 
-  // === HÀM MỚI: Thiết kế lại (xóa hết + reset màu) ===
   const clearAllCandles = () => {
     if (window.confirm('Bạn có chắc muốn xóa sạch tất cả các nến không?\nHành động này không thể hoàn tác.')) {
       setCandles([])
       setSelectedIndex(null)
       setIsPanelOpen(false)
 
-      // Reset màu về mặc định
       setChartBgColor('#000000')
       setBullColor('#26a69a')
       setBearColor('#ef5350')
@@ -307,15 +409,28 @@ function App() {
   }
 
   const bind = useGesture({
-    onDrag: ({ offset: [dx, dy] }) => {
-      if (window.altKey) {
-        setOffset({ x: offset.x + dx, y: offset.y + dy })
+    onDrag: ({ offset: [dx, dy], dragging, memo = offset }) => {
+      if (dragging) {
+        targetOffset.current = {
+          x: memo.x + dx,
+          y: memo.y + dy,
+        }
+        return memo
+      } else {
+        return memo
       }
     },
     onWheel: ({ delta: [, dy] }) => {
       setScale(prev => Math.max(0.2, Math.min(3, prev - dy * 0.001)))
     },
-  })
+  },
+    {
+      drag: {
+        filterTaps: true,
+        from: () => [offset.x, offset.y],
+        pointer: { buttons: [1] },
+      },
+    })
 
   const saveData = () => {
     const data = {
@@ -341,7 +456,8 @@ function App() {
       try {
         const data = JSON.parse(event.target.result)
         if (data.candles && Array.isArray(data.candles)) {
-          setCandles(data.candles)
+          const loadedCandles = ensureContinuity(data.candles)
+          setCandles(loadedCandles)
           if (data.chartBgColor) setChartBgColor(data.chartBgColor)
           if (data.bullColor) setBullColor(data.bullColor)
           if (data.bearColor) setBearColor(data.bearColor)
@@ -405,7 +521,6 @@ function App() {
       >
         <h1 style={{ margin: '0 0 15px 0' }}>CandleCreator</h1>
 
-        {/* Dòng chính: Zoom bên trái - Buttons ở giữa - Màu bên phải */}
         <div style={{
           margin: '15px 0',
           display: 'flex',
@@ -414,7 +529,6 @@ function App() {
           flexWrap: 'wrap',
           gap: '20px',
         }}>
-          {/* Bên trái: Nút Zoom */}
           <button
             onClick={resetZoom}
             style={{
@@ -435,7 +549,6 @@ function App() {
             {Math.round(scale * 100)}%
           </button>
 
-          {/* Giữa: Các button chức năng */}
           <div style={{
             display: 'flex',
             justifyContent: 'center',
@@ -458,7 +571,6 @@ function App() {
             </button>
           </div>
 
-          {/* Bên phải: Các ô chọn màu */}
           <div style={{
             display: 'flex',
             gap: '20px',
@@ -503,9 +615,14 @@ function App() {
           flex: 1,
           position: 'relative',
           overflow: 'hidden',
-          cursor: window.altKey ? 'move' : 'default',
+          cursor: 'grab',
           background: chartBgColor,
         }}
+        onMouseDown={(e) => {
+          if (e.button === 0) stageContainerRef.current.style.cursor = 'grabbing'
+        }}
+        onMouseUp={() => stageContainerRef.current.style.cursor = 'grab'}
+        onMouseLeave={() => stageContainerRef.current.style.cursor = 'default'}
       >
         <Stage
           width={stageSize.width}
@@ -547,6 +664,7 @@ function App() {
           onChange={handleFileChange}
         />
 
+        {/* === EDIT PANEL === */}
         <div
           id="edit-panel"
           style={{
@@ -623,6 +741,27 @@ function App() {
               </div>
             </div>
           </div>
+
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            marginTop: '30px',
+            paddingTop: '20px',
+            borderTop: '1px solid #444'
+          }}>
+            <button
+              onClick={deleteSelectedCandle}
+              disabled={selectedIndex === null}
+              style={{
+                ...actionBtnStyle,
+                background: '#d32f2f',
+                opacity: selectedIndex !== null ? 1 : 0.5,
+              }}
+              title="Xoá nến này"
+            >
+              🗑️ Xoá nến
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -637,6 +776,17 @@ const btnStyle = {
   color: '#fff',
   border: 'none',
   borderRadius: '6px',
+}
+
+const actionBtnStyle = {
+  padding: '12px 24px',
+  fontSize: '16px',
+  fontWeight: 'bold',
+  color: '#fff',
+  border: 'none',
+  borderRadius: '8px',
+  cursor: 'pointer',
+  minWidth: '180px',
 }
 
 const sliderStyle = {
