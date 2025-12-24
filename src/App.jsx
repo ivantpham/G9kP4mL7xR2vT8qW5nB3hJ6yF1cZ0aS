@@ -134,6 +134,11 @@ function App() {
   const [bullColor, setBullColor] = useState('#26a69a')
   const [bearColor, setBearColor] = useState('#ef5350')
 
+  // State cho popup chọn kích thước thân nến
+  const [showSizePopup, setShowSizePopup] = useState(false)
+  const [lastBodySize, setLastBodySize] = useState(0)
+  const [addType, setAddType] = useState(null) // 'bull' hoặc 'bear'
+
   const stageRef = useRef()
   const stageContainerRef = useRef()
   const headerRef = useRef()
@@ -190,13 +195,53 @@ function App() {
   }
 
   const addCandle = (type) => {
-    let openPrice = candles.length > 0 ? candles[candles.length - 1].close : 100 + Math.random() * 50
-    const variation = 60 + Math.random() * 120;  // ← TĂNG GẤP 3 LẦN (trước là 10 + random*20)
-    const close = type === 'bull' ? openPrice + variation : openPrice - variation
-    const high = Math.max(openPrice, close) + Math.random() * 24  // Tăng bấc lên cho cân đối
-    const low = Math.min(openPrice, close) - Math.random() * 24
+    if (candles.length === 0) {
+      // Nếu chưa có nến, add ngẫu nhiên
+      const openPrice = 100 + Math.random() * 50
+      const variation = 60 + Math.random() * 120
+      const close = type === 'bull' ? openPrice + variation : openPrice - variation
+      const high = Math.max(openPrice, close) + Math.random() * 24
+      const low = Math.min(openPrice, close) - Math.random() * 24
+      setCandles(prev => [...prev, { open: openPrice, high, low, close }])
+      setSelectedIndex(null)
+      setIsPanelOpen(false)
+      return
+    }
+
+    // Lấy thân nến cuối cùng
+    const lastCandle = candles[candles.length - 1]
+    const bodySize = Math.abs(lastCandle.close - lastCandle.open)
+    setLastBodySize(bodySize)
+
+    setAddType(type)
+    setShowSizePopup(true)
+  }
+
+  const handleSelectSize = (factor, side) => {
+    if (candles.length === 0 || addType === null) return
+
+    const lastCandle = candles[candles.length - 1]
+    const openPrice = lastCandle.close
+
+    let bodySizeNew
+    if (side === 'large') {
+      bodySizeNew = lastBodySize * factor
+    } else {
+      bodySizeNew = lastBodySize / factor
+    }
+
+    const close = addType === 'bull'
+      ? openPrice + bodySizeNew
+      : openPrice - bodySizeNew
+
+    const wickVariation = bodySizeNew * 0.2 + Math.random() * 20
+    const high = Math.max(openPrice, close) + wickVariation
+    const low = Math.min(openPrice, close) - wickVariation
 
     setCandles(prev => [...prev, { open: openPrice, high, low, close }])
+
+    setShowSizePopup(false)
+    setAddType(null)
     setSelectedIndex(null)
     setIsPanelOpen(false)
   }
@@ -561,6 +606,76 @@ function App() {
               title="Sao chép nến">📋 Copy Nến</button>
           </div>
         </div>
+
+        {/* Popup chọn kích thước thân nến */}
+        {showSizePopup && (
+          <div style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 2000,
+            display: 'flex', justifyContent: 'center', alignItems: 'center'
+          }}>
+            <div style={{
+              background: '#222', padding: '30px', borderRadius: '16px', color: '#fff',
+              maxWidth: '500px', textAlign: 'center', border: '2px solid #444'
+            }}>
+              <h2 style={{ margin: '0 0 20px', color: '#00bcd4' }}>Chọn kích thước thân nến mới</h2>
+              <p style={{ marginBottom: '25px', color: '#aaa' }}>
+                Thân nến trước: <strong>{lastBodySize.toFixed(2)}</strong>
+              </p>
+
+              <div style={{ display: 'flex', justifyContent: 'space-around', gap: '40px' }}>
+                {/* Cột trái: Nhỏ hơn */}
+                <div>
+                  <h3 style={{ color: '#ff9800', marginBottom: '15px' }}>Nhỏ hơn</h3>
+                  {[2, 3, 4, 5].map(factor => (
+                    <button
+                      key={`small-${factor}`}
+                      onClick={() => handleSelectSize(factor, 'small')}
+                      style={{
+                        display: 'block', width: '140px', margin: '10px auto',
+                        padding: '14px', fontSize: '18px', background: '#444', color: '#fff',
+                        border: 'none', borderRadius: '10px', cursor: 'pointer'
+                      }}
+                    >
+                      / {factor}x
+                    </button>
+                  ))}
+                </div>
+
+                {/* Cột phải: Lớn hơn */}
+                <div>
+                  <h3 style={{ color: '#4caf50', marginBottom: '15px' }}>Lớn hơn</h3>
+                  {[2, 3, 4, 5].map(factor => (
+                    <button
+                      key={`large-${factor}`}
+                      onClick={() => handleSelectSize(factor, 'large')}
+                      style={{
+                        display: 'block', width: '140px', margin: '10px auto',
+                        padding: '14px', fontSize: '18px', background: '#444', color: '#fff',
+                        border: 'none', borderRadius: '10px', cursor: 'pointer'
+                      }}
+                    >
+                      × {factor}x
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                onClick={() => {
+                  setShowSizePopup(false)
+                  setAddType(null)
+                }}
+                style={{
+                  marginTop: '30px', padding: '12px 40px', background: '#ef5350',
+                  color: '#fff', border: 'none', borderRadius: '10px', cursor: 'pointer',
+                  fontSize: '16px'
+                }}
+              >
+                Hủy
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
