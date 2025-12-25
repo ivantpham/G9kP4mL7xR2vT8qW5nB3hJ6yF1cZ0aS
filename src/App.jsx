@@ -36,7 +36,7 @@ function Candle({ x, open, high, low, close, width = 12, priceToY, onClick, isSe
   )
 }
 
-// LoginScreen
+// LoginScreen (giữ nguyên)
 function LoginScreen({ onLoginSuccess }) {
   const [selectedUser, setSelectedUser] = useState('')
   const [password, setPassword] = useState('')
@@ -134,10 +134,10 @@ function App() {
   const [bullColor, setBullColor] = useState('#26a69a')
   const [bearColor, setBearColor] = useState('#ef5350')
 
-  // State cho popup chọn kích thước thân nến
+  // State cho popup chọn size
   const [showSizePopup, setShowSizePopup] = useState(false)
   const [lastBodySize, setLastBodySize] = useState(0)
-  const [addType, setAddType] = useState(null) // 'bull' hoặc 'bear'
+  const [addType, setAddType] = useState(null)
 
   const stageRef = useRef()
   const stageContainerRef = useRef()
@@ -196,7 +196,6 @@ function App() {
 
   const addCandle = (type) => {
     if (candles.length === 0) {
-      // Nếu chưa có nến, add ngẫu nhiên
       const openPrice = 100 + Math.random() * 50
       const variation = 60 + Math.random() * 120
       const close = type === 'bull' ? openPrice + variation : openPrice - variation
@@ -208,7 +207,6 @@ function App() {
       return
     }
 
-    // Lấy thân nến cuối cùng
     const lastCandle = candles[candles.length - 1]
     const bodySize = Math.abs(lastCandle.close - lastCandle.open)
     setLastBodySize(bodySize)
@@ -217,18 +215,32 @@ function App() {
     setShowSizePopup(true)
   }
 
+  const addRandomCandle = (isBull) => {
+    let openPrice = candles.length > 0 ? candles[candles.length - 1].close : 100 + Math.random() * 50
+
+    // Thân nến ngẫu nhiên từ 10 đến 300 đơn vị
+    const bodySize = Math.random() * 290 + 10
+
+    const close = isBull ? openPrice + bodySize : openPrice - bodySize
+
+    // Râu trên và dưới bằng 1/10 thân nến (Marubozu gần giống)
+    const wickSize = bodySize / 10
+
+    const high = Math.max(openPrice, close) + wickSize
+    const low = Math.min(openPrice, close) - wickSize
+
+    setCandles(prev => [...prev, { open: openPrice, high, low, close }])
+    setSelectedIndex(null)
+    setIsPanelOpen(false)
+  }
+
   const handleSelectSize = (factor, side) => {
     if (candles.length === 0 || addType === null) return
 
     const lastCandle = candles[candles.length - 1]
     const openPrice = lastCandle.close
 
-    let bodySizeNew
-    if (side === 'large') {
-      bodySizeNew = lastBodySize * factor
-    } else {
-      bodySizeNew = lastBodySize / factor
-    }
+    let bodySizeNew = side === 'large' ? lastBodySize * factor : lastBodySize / factor
 
     const close = addType === 'bull'
       ? openPrice + bodySizeNew
@@ -415,7 +427,6 @@ function App() {
     saveAs(uri, 'chart.png')
   }
 
-  // SCALE CỐ ĐỊNH
   const priceToY = (price) => {
     const fixedMinPrice = -600;
     const fixedMaxPrice = 600;
@@ -440,6 +451,8 @@ function App() {
           <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '10px', flex: '1' }}>
             <button onClick={() => addCandle('bull')} style={{ padding: '9px 18px', fontSize: '15px', cursor: 'pointer', background: '#444', color: '#fff', border: 'none', borderRadius: '6px' }}>🟢 Add Bull</button>
             <button onClick={() => addCandle('bear')} style={{ padding: '9px 18px', fontSize: '15px', cursor: 'pointer', background: '#444', color: '#fff', border: 'none', borderRadius: '6px' }}>🔴 Add Bear</button>
+            <button onClick={() => addRandomCandle(true)} style={{ padding: '9px 18px', fontSize: '15px', cursor: 'pointer', background: '#26a69a', color: '#fff', border: 'none', borderRadius: '6px' }}>🎲 Random Bull</button>
+            <button onClick={() => addRandomCandle(false)} style={{ padding: '9px 18px', fontSize: '15px', cursor: 'pointer', background: '#ef5350', color: '#fff', border: 'none', borderRadius: '6px' }}>🎲 Random Bear</button>
             <button onClick={saveData} style={{ padding: '9px 18px', fontSize: '15px', cursor: 'pointer', background: '#444', color: '#fff', border: 'none', borderRadius: '6px' }}>💾 Save Data</button>
             <button onClick={openData} style={{ padding: '9px 18px', fontSize: '15px', cursor: 'pointer', background: '#444', color: '#fff', border: 'none', borderRadius: '6px' }}>📂 Open Data</button>
             <button onClick={exportPNG} style={{ padding: '9px 18px', fontSize: '15px', cursor: 'pointer', background: '#444', color: '#fff', border: 'none', borderRadius: '6px' }}>🖼️ Export PNG</button>
@@ -486,7 +499,7 @@ function App() {
 
         <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept=".json" onChange={handleFileChange} />
 
-        {/* EDIT PANEL */}
+        {/* EDIT PANEL (giữ nguyên) */}
         <div id="edit-panel" style={{
           position: 'absolute', bottom: 0, left: 0, width: '100%',
           background: 'linear-gradient(to top, #1e1e1e, #252525)',
@@ -528,8 +541,8 @@ function App() {
                 </label>
                 <input
                   type="range"
-                  min="-600"
-                  max="600"
+                  min="-10000"
+                  max="10000"
                   step="0.1"
                   value={editValues.open || 0}
                   disabled={!allowEditOpen}
@@ -546,8 +559,8 @@ function App() {
                 </label>
                 <input
                   type="range"
-                  min="-600"
-                  max="600"
+                  min="-10000"
+                  max="10000"
                   step="0.1"
                   value={editValues.high || 0}
                   onChange={e => {
@@ -566,8 +579,8 @@ function App() {
                 </label>
                 <input
                   type="range"
-                  min="-600"
-                  max="600"
+                  min="-10000"
+                  max="10000"
                   step="0.1"
                   value={editValues.low || 0}
                   onChange={e => {
@@ -583,8 +596,8 @@ function App() {
                 </label>
                 <input
                   type="range"
-                  min="-600"
-                  max="600"
+                  min="-10000"
+                  max="10000"
                   step="0.1"
                   value={editValues.close || 0}
                   onChange={e => {
@@ -610,53 +623,57 @@ function App() {
         {/* Popup chọn kích thước thân nến */}
         {showSizePopup && (
           <div style={{
-            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 2000,
-            display: 'flex', justifyContent: 'center', alignItems: 'center'
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 2000,
+            display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'auto'
           }}>
             <div style={{
-              background: '#222', padding: '30px', borderRadius: '16px', color: '#fff',
-              maxWidth: '500px', textAlign: 'center', border: '2px solid #444'
+              background: '#222', padding: '30px 40px', borderRadius: '16px', color: '#fff',
+              maxWidth: '700px', textAlign: 'center', border: '2px solid #444', boxShadow: '0 10px 40px rgba(0,0,0,0.8)'
             }}>
               <h2 style={{ margin: '0 0 20px', color: '#00bcd4' }}>Chọn kích thước thân nến mới</h2>
               <p style={{ marginBottom: '25px', color: '#aaa' }}>
                 Thân nến trước: <strong>{lastBodySize.toFixed(2)}</strong>
               </p>
 
-              <div style={{ display: 'flex', justifyContent: 'space-around', gap: '40px' }}>
-                {/* Cột trái: Nhỏ hơn */}
+              <div style={{ display: 'flex', justifyContent: 'space-around', gap: '50px' }}>
                 <div>
-                  <h3 style={{ color: '#ff9800', marginBottom: '15px' }}>Nhỏ hơn</h3>
-                  {[2, 3, 4, 5].map(factor => (
-                    <button
-                      key={`small-${factor}`}
-                      onClick={() => handleSelectSize(factor, 'small')}
-                      style={{
-                        display: 'block', width: '140px', margin: '10px auto',
-                        padding: '14px', fontSize: '18px', background: '#444', color: '#fff',
-                        border: 'none', borderRadius: '10px', cursor: 'pointer'
-                      }}
-                    >
-                      / {factor}x
-                    </button>
-                  ))}
+                  <h3 style={{ color: '#ff9800', marginBottom: '15px', fontSize: '20px' }}>Nhỏ hơn</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(factor => (
+                      <button
+                        key={`small-${factor}`}
+                        onClick={() => handleSelectSize(factor, 'small')}
+                        style={{
+                          padding: '12px 16px', fontSize: '16px', background: '#444', color: '#fff',
+                          border: 'none', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s'
+                        }}
+                        onMouseOver={e => e.target.style.background = '#555'}
+                        onMouseOut={e => e.target.style.background = '#444'}
+                      >
+                        / {factor}x
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
-                {/* Cột phải: Lớn hơn */}
                 <div>
-                  <h3 style={{ color: '#4caf50', marginBottom: '15px' }}>Lớn hơn</h3>
-                  {[2, 3, 4, 5].map(factor => (
-                    <button
-                      key={`large-${factor}`}
-                      onClick={() => handleSelectSize(factor, 'large')}
-                      style={{
-                        display: 'block', width: '140px', margin: '10px auto',
-                        padding: '14px', fontSize: '18px', background: '#444', color: '#fff',
-                        border: 'none', borderRadius: '10px', cursor: 'pointer'
-                      }}
-                    >
-                      × {factor}x
-                    </button>
-                  ))}
+                  <h3 style={{ color: '#4caf50', marginBottom: '15px', fontSize: '20px' }}>Lớn hơn</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(factor => (
+                      <button
+                        key={`large-${factor}`}
+                        onClick={() => handleSelectSize(factor, 'large')}
+                        style={{
+                          padding: '12px 16px', fontSize: '16px', background: '#444', color: '#fff',
+                          border: 'none', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s'
+                        }}
+                        onMouseOver={e => e.target.style.background = '#555'}
+                        onMouseOut={e => e.target.style.background = '#444'}
+                      >
+                        × {factor}x
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -666,10 +683,12 @@ function App() {
                   setAddType(null)
                 }}
                 style={{
-                  marginTop: '30px', padding: '12px 40px', background: '#ef5350',
+                  marginTop: '30px', padding: '12px 50px', background: '#ef5350',
                   color: '#fff', border: 'none', borderRadius: '10px', cursor: 'pointer',
-                  fontSize: '16px'
+                  fontSize: '18px', fontWeight: 'bold'
                 }}
+                onMouseOver={e => e.target.style.background = '#e53935'}
+                onMouseOut={e => e.target.style.background = '#ef5350'}
               >
                 Hủy
               </button>
