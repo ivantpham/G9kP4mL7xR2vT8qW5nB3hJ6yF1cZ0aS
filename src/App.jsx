@@ -139,6 +139,11 @@ function App() {
   const [lastBodySize, setLastBodySize] = useState(0)
   const [addType, setAddType] = useState(null)
 
+  // Thêm state cho chỉnh zoom trực tiếp
+  const [isEditingZoom, setIsEditingZoom] = useState(false)
+  const [zoomInput, setZoomInput] = useState(100)
+  const zoomInputRef = useRef(null)
+
   const stageRef = useRef()
   const stageContainerRef = useRef()
   const headerRef = useRef()
@@ -176,6 +181,14 @@ function App() {
     window.addEventListener('resize', updateSize)
     return () => window.removeEventListener('resize', updateSize)
   }, [])
+
+  // Auto focus và select input khi bắt đầu edit zoom
+  useEffect(() => {
+    if (isEditingZoom && zoomInputRef.current) {
+      zoomInputRef.current.focus()
+      zoomInputRef.current.select()
+    }
+  }, [isEditingZoom])
 
   const ensureContinuity = (newCandles) => {
     if (newCandles.length < 2) return newCandles
@@ -360,6 +373,7 @@ function App() {
     setScale(1)
     targetOffset.current = { x: 50, y: 0 }
     setOffset({ x: 50, y: 0 })
+    setIsEditingZoom(false)
   }
 
   const clearAllCandles = () => {
@@ -436,6 +450,15 @@ function App() {
     return normalized * stageSize.height;
   };
 
+  // Hàm xác nhận zoom khi blur hoặc Enter
+  const handleZoomConfirm = () => {
+    let val = parseInt(zoomInput, 10)
+    if (isNaN(val) || val < 20) val = 20
+    if (val > 300) val = 300
+    setScale(val / 100)
+    setIsEditingZoom(false)
+  }
+
   if (!isAuthenticated) return <LoginScreen onLoginSuccess={() => setIsAuthenticated(true)} />
 
   return (
@@ -443,10 +466,74 @@ function App() {
       <div ref={headerRef} style={{ background: '#222', color: '#fff', padding: '14px', textAlign: 'center', flexShrink: 0, boxShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>
         <h1 style={{ margin: '0 0 10px 0', fontSize: '28px' }}>CandleCreator</h1>
         <div style={{ margin: '10px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
-          <button onClick={resetZoom} style={{ fontSize: '22px', fontWeight: 'bold', padding: '10px 25px', background: '#444', color: '#fff', border: '2px solid #666', borderRadius: '10px', cursor: 'pointer', minWidth: '110px', marginLeft: '15px' }}
-            onMouseOver={e => e.target.style.background = '#555'} onMouseOut={e => e.target.style.background = '#444'}>
-            {Math.round(scale * 100)}%
-          </button>
+          {/* Nút zoom có thể edit trực tiếp */}
+          <div style={{ marginLeft: '15px' }}>
+            {isEditingZoom ? (
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <input
+                  ref={zoomInputRef}
+                  type="number"
+                  min="20"
+                  max="300"
+                  step="1"
+                  value={zoomInput}
+                  onChange={(e) => setZoomInput(e.target.value)}
+                  onBlur={handleZoomConfirm}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleZoomConfirm()
+                    if (e.key === 'Escape') setIsEditingZoom(false)
+                  }}
+                  style={{
+                    fontSize: '22px',
+                    fontWeight: 'bold',
+                    padding: '10px 10px',
+                    background: '#555',
+                    color: '#fff',
+                    border: '2px solid #666',
+                    borderRadius: '10px 0 0 10px',
+                    width: '90px',
+                    textAlign: 'center',
+                    outline: 'none',
+                  }}
+                />
+                <div style={{
+                  fontSize: '22px',
+                  fontWeight: 'bold',
+                  padding: '10px 15px',
+                  background: '#444',
+                  color: '#fff',
+                  border: '2px solid #666',
+                  borderLeft: 'none',
+                  borderRadius: '0 10px 10px 0',
+                }}>
+                  %
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => {
+                  setZoomInput(Math.round(scale * 100))
+                  setIsEditingZoom(true)
+                }}
+                onDoubleClick={resetZoom}
+                style={{
+                  fontSize: '22px',
+                  fontWeight: 'bold',
+                  padding: '10px 25px',
+                  background: '#444',
+                  color: '#fff',
+                  border: '2px solid #666',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  minWidth: '110px',
+                }}
+                onMouseOver={(e) => e.target.style.background = '#555'}
+                onMouseOut={(e) => e.target.style.background = '#444'}
+              >
+                {Math.round(scale * 100)}%
+              </button>
+            )}
+          </div>
 
           <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '10px', flex: '1' }}>
             <button onClick={() => addCandle('bull')} style={{ padding: '9px 18px', fontSize: '15px', cursor: 'pointer', background: '#444', color: '#fff', border: 'none', borderRadius: '6px' }}>🟢 Add Bull</button>
