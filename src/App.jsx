@@ -214,9 +214,18 @@ function App() {
       const close = type === 'bull' ? openPrice + variation : openPrice - variation
       const high = Math.max(openPrice, close) + Math.random() * 24
       const low = Math.min(openPrice, close) - Math.random() * 24
-      setCandles(prev => [...prev, { open: openPrice, high, low, close }])
-      setSelectedIndex(null)
-      setIsPanelOpen(false)
+      const newCandle = { open: openPrice, high, low, close }
+
+      setCandles(prev => {
+        const updated = [...prev, newCandle]
+        setTimeout(() => {
+          setSelectedIndex(0)
+          setEditValues({ ...newCandle })
+          setIsPanelOpen(true)
+          setAllowEditOpen(false)
+        }, 0)
+        return updated
+      })
       return
     }
 
@@ -231,20 +240,27 @@ function App() {
   const addRandomCandle = (isBull) => {
     let openPrice = candles.length > 0 ? candles[candles.length - 1].close : 100 + Math.random() * 50
 
-    // Thân nến ngẫu nhiên từ 10 đến 300 đơn vị
     const bodySize = Math.random() * 290 + 10
 
     const close = isBull ? openPrice + bodySize : openPrice - bodySize
 
-    // Râu trên và dưới bằng 1/10 thân nến (Marubozu gần giống)
     const wickSize = bodySize / 10
 
     const high = Math.max(openPrice, close) + wickSize
     const low = Math.min(openPrice, close) - wickSize
 
-    setCandles(prev => [...prev, { open: openPrice, high, low, close }])
-    setSelectedIndex(null)
-    setIsPanelOpen(false)
+    const newCandle = { open: openPrice, high, low, close }
+
+    setCandles(prev => {
+      const updated = [...prev, newCandle]
+      setTimeout(() => {
+        setSelectedIndex(prev.length)
+        setEditValues({ ...newCandle })
+        setIsPanelOpen(true)
+        setAllowEditOpen(false)
+      }, 0)
+      return updated
+    })
   }
 
   const handleSelectSize = (factor, side) => {
@@ -263,12 +279,21 @@ function App() {
     const high = Math.max(openPrice, close) + wickVariation
     const low = Math.min(openPrice, close) - wickVariation
 
-    setCandles(prev => [...prev, { open: openPrice, high, low, close }])
+    const newCandle = { open: openPrice, high, low, close }
+
+    setCandles(prev => {
+      const updated = [...prev, newCandle]
+      setTimeout(() => {
+        setSelectedIndex(prev.length)
+        setEditValues({ ...newCandle })
+        setIsPanelOpen(true)
+        setAllowEditOpen(false)
+      }, 0)
+      return updated
+    })
 
     setShowSizePopup(false)
     setAddType(null)
-    setSelectedIndex(null)
-    setIsPanelOpen(false)
   }
 
   const handleCandleClick = (index) => {
@@ -277,6 +302,10 @@ function App() {
     setEditValues({ ...candle })
     setIsPanelOpen(true)
     setAllowEditOpen(false)
+  }
+
+  const hidePanel = () => {
+    setIsPanelOpen(false)
   }
 
   const updateCandle = () => {
@@ -320,12 +349,6 @@ function App() {
     }, 50)
   }
 
-  const closePanel = () => {
-    setSelectedIndex(null)
-    setIsPanelOpen(false)
-    setAllowEditOpen(false)
-  }
-
   const deleteSelectedCandle = () => {
     if (selectedIndex === null) return
     if (selectedIndex === candles.length - 1) {
@@ -364,9 +387,17 @@ function App() {
       low: lastClose + deltaLow,
       close: lastClose + deltaClose,
     }
-    setCandles(prev => [...prev, newCandle])
-    setSelectedIndex(null)
-    setIsPanelOpen(false)
+
+    setCandles(prev => {
+      const updated = [...prev, newCandle]
+      setTimeout(() => {
+        setSelectedIndex(prev.length)
+        setEditValues({ ...newCandle })
+        setIsPanelOpen(true)
+        setAllowEditOpen(false)
+      }, 0)
+      return updated
+    })
   }
 
   const resetZoom = () => {
@@ -586,7 +617,7 @@ function App() {
 
         <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept=".json" onChange={handleFileChange} />
 
-        {/* EDIT PANEL (giữ nguyên) */}
+        {/* EDIT PANEL */}
         <div id="edit-panel" style={{
           position: 'absolute', bottom: 0, left: 0, width: '100%',
           background: 'linear-gradient(to top, #1e1e1e, #252525)',
@@ -604,7 +635,7 @@ function App() {
             <h3 style={{ margin: 0, color: '#fff', fontSize: '17px' }}>
               Edit Candle {selectedIndex !== null ? selectedIndex + 1 : ''}
             </h3>
-            <button onClick={closePanel} style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '26px', cursor: 'pointer', lineHeight: '1', padding: '0 8px' }}>×</button>
+            <button onClick={hidePanel} style={{ background: 'none', border: 'none', color: '#aaa', fontSize: '26px', cursor: 'pointer', lineHeight: '1', padding: '0 8px' }}>⌄</button>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px', gap: '8px' }}>
@@ -706,6 +737,36 @@ function App() {
               title="Sao chép nến">📋 Copy Nến</button>
           </div>
         </div>
+
+        {/* Nút kéo mở panel khi panel đang ẩn */}
+        {!isPanelOpen && candles.length > 0 && (
+          <div style={{
+            position: 'absolute',
+            bottom: '20px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 1100,
+          }}>
+            <button
+              onClick={() => setIsPanelOpen(true)}
+              style={{
+                background: 'linear-gradient(#00bcd4, #008ba3)',
+                color: '#fff',
+                padding: '12px 40px',
+                fontSize: '18px',
+                fontWeight: 'bold',
+                border: 'none',
+                borderRadius: '30px',
+                cursor: 'pointer',
+                boxShadow: '0 8px 20px rgba(0,0,0,0.6)',
+              }}
+              onMouseOver={e => e.target.style.background = 'linear-gradient(#00acc1, #007c94)'}
+              onMouseOut={e => e.target.style.background = 'linear-gradient(#00bcd4, #008ba3)'}
+            >
+              ⌃ Mở bảng chỉnh sửa {selectedIndex !== null ? `(Nến ${selectedIndex + 1})` : ''}
+            </button>
+          </div>
+        )}
 
         {/* Popup chọn kích thước thân nến */}
         {showSizePopup && (
