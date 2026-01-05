@@ -659,8 +659,8 @@ function App() {
                 </label>
                 <input
                   type="range"
-                  min="-10000"
-                  max="10000"
+                  min="-5001"
+                  max="5001"
                   step="0.1"
                   value={editValues.open || 0}
                   disabled={!allowEditOpen}
@@ -677,8 +677,8 @@ function App() {
                 </label>
                 <input
                   type="range"
-                  min="-10000"
-                  max="10000"
+                  min="-5001"
+                  max="5001"
                   step="0.1"
                   value={editValues.high || 0}
                   onChange={e => {
@@ -697,8 +697,8 @@ function App() {
                 </label>
                 <input
                   type="range"
-                  min="-10000"
-                  max="10000"
+                  min="-5001"
+                  max="5001"
                   step="0.1"
                   value={editValues.low || 0}
                   onChange={e => {
@@ -714,8 +714,8 @@ function App() {
                 </label>
                 <input
                   type="range"
-                  min="-10000"
-                  max="10000"
+                  min="-5001"
+                  max="5001"
                   step="0.1"
                   value={editValues.close || 0}
                   onChange={e => {
