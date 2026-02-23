@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { Stage, Layer, Rect, Line } from 'react-konva'
+import { Stage, Layer, Rect, Line, Circle } from 'react-konva'
 import { useGesture } from '@use-gesture/react'
 import { saveAs } from 'file-saver'
 
@@ -131,8 +131,11 @@ function App() {
   const updateTimeout = useRef(null)
   const [stageSize, setStageSize] = useState({ width: 800, height: 600 })
 
-  // THÊM STATE MỚI CHO RANGE SCALE
   const [rangeScale, setRangeScale] = useState(5000)
+
+  // Crosshair states
+  const [showCrosshair, setShowCrosshair] = useState(false)
+  const [crosshairPos, setCrosshairPos] = useState({ x: 0, y: 0 })
 
   useEffect(() => {
     const animate = () => {
@@ -376,6 +379,46 @@ function App() {
     }
   }
 
+  // ==================== CROSSHAIR - ĐÃ FIX CHÍNH XÁC 100% ====================
+  const handleStageMouseDown = (e) => {
+    if (e.evt.button === 1) { // chuột giữa
+      e.evt.preventDefault()
+      setShowCrosshair(true)
+
+      const stage = stageRef.current
+      if (stage) {
+        const pointer = stage.getPointerPosition()
+        if (pointer) {
+          const x = (pointer.x - stage.x()) / stage.scaleX()
+          const y = (pointer.y - stage.y()) / stage.scaleY()
+          setCrosshairPos({ x, y })
+        }
+      }
+    }
+  }
+
+  const handleStageMouseMove = (e) => {
+    if (!showCrosshair) return
+
+    const stage = stageRef.current
+    if (!stage) return
+
+    const pointer = stage.getPointerPosition()
+    if (pointer) {
+      const x = (pointer.x - stage.x()) / stage.scaleX()
+      const y = (pointer.y - stage.y()) / stage.scaleY()
+      setCrosshairPos({ x, y })
+    }
+  }
+
+  const handleContextMenu = (e) => {
+    if (showCrosshair) {
+      e.evt.preventDefault()
+      setShowCrosshair(false)
+    }
+  }
+  // ==================================================================
+
   const bind = useGesture({
     onDrag: ({ offset: [dx, dy], dragging, memo = offset, target }) => {
       if (target && target.closest('#edit-panel')) return memo
@@ -539,11 +582,25 @@ function App() {
           </div>
         </div>
       </div>
+
       <div ref={stageContainerRef} {...bind()} style={{ flex: 1, position: 'relative', overflow: 'hidden', cursor: 'grab', background: chartBgColor }}
         onMouseDown={e => { if (e.button === 0) stageContainerRef.current.style.cursor = 'grabbing' }}
         onMouseUp={() => stageContainerRef.current.style.cursor = 'grab'}
         onMouseLeave={() => stageContainerRef.current.style.cursor = 'default'}>
-        <Stage width={stageSize.width} height={stageSize.height} scaleX={scale} scaleY={scale} x={offset.x} y={offset.y} ref={stageRef}>
+
+        <Stage
+          width={stageSize.width}
+          height={stageSize.height}
+          scaleX={scale}
+          scaleY={scale}
+          x={offset.x}
+          y={offset.y}
+          ref={stageRef}
+
+          onMouseDown={handleStageMouseDown}
+          onMouseMove={handleStageMouseMove}
+          onContextMenu={handleContextMenu}
+        >
           <Layer>
             {candles.map((c, i) => {
               const candleX = 100 + i * 22
@@ -564,8 +621,39 @@ function App() {
               )
             })}
           </Layer>
+
+          {/* CROSSHAIR - LUÔN CHÍNH XÁC THEO CHUỘT */}
+          {showCrosshair && (
+            <Layer>
+              <Line
+                points={[crosshairPos.x, 0, crosshairPos.x, stageSize.height]}
+                stroke="#ffff00"
+                strokeWidth={1.5}
+                dash={[4, 2]}
+                opacity={0.9}
+                listening={false}
+              />
+              <Line
+                points={[0, crosshairPos.y, stageSize.width, crosshairPos.y]}
+                stroke="#ffff00"
+                strokeWidth={1.5}
+                dash={[4, 2]}
+                opacity={0.9}
+                listening={false}
+              />
+              <Circle
+                x={crosshairPos.x}
+                y={crosshairPos.y}
+                radius={3}
+                fill="#ffff00"
+                opacity={0.95}
+              />
+            </Layer>
+          )}
         </Stage>
+
         <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept=".json" onChange={handleFileChange} />
+
         {/* EDIT PANEL */}
         <div id="edit-panel" style={{
           position: 'absolute', bottom: 0, left: 0, width: '100%',
@@ -599,7 +687,6 @@ function App() {
             </span>
           </div>
 
-          {/* THÊM 4 BUTTON CHỌN RANGE SCALE (dạng stick/select) */}
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '20px', gap: '12px', flexWrap: 'wrap' }}>
             <label style={{ color: '#fff', fontSize: '15px', fontWeight: 'bold', marginRight: '10px' }}>Thang đo giá:</label>
             {[2500, 5000, 7500, 10000].map(val => (
@@ -711,7 +798,8 @@ function App() {
               title="Sao chép nến">📋 Copy Nến</button>
           </div>
         </div>
-        {/* Nút kéo mở panel khi panel đang ẩn */}
+
+        {/* Nút mở panel khi ẩn */}
         {!isPanelOpen && candles.length > 0 && (
           <div style={{
             position: 'absolute',
@@ -740,7 +828,8 @@ function App() {
             </button>
           </div>
         )}
-        {/* Popup chọn kích thước thân nến */}
+
+        {/* Popup chọn kích thước */}
         {showSizePopup && (
           <div style={{
             position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 2000,
