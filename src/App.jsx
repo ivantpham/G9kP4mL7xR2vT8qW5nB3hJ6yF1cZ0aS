@@ -137,6 +137,8 @@ function App() {
   const [showCrosshair, setShowCrosshair] = useState(false)
   const [crosshairPos, setCrosshairPos] = useState({ x: 0, y: 0 })
 
+  const [showGrid, setShowGrid] = useState(true)
+
   useEffect(() => {
     const animate = () => {
       setOffset(prev => {
@@ -562,7 +564,7 @@ function App() {
               </button>
             )}
           </div>
-          <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '10px', flex: '1' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '10px', flex: '1 1 0%' }}>
             <button onClick={() => addCandle('bull')} style={{ padding: '9px 18px', fontSize: '15px', cursor: 'pointer', background: '#444', color: '#fff', border: 'none', borderRadius: '6px' }}>🟢 Add Bull</button>
             <button onClick={() => addCandle('bear')} style={{ padding: '9px 18px', fontSize: '15px', cursor: 'pointer', background: '#444', color: '#fff', border: 'none', borderRadius: '6px' }}>🔴 Add Bear</button>
             <button onClick={() => addRandomCandle(true)} style={{ padding: '9px 18px', fontSize: '15px', cursor: 'pointer', background: '#26a69a', color: '#fff', border: 'none', borderRadius: '6px' }}>🎲 Random Bull</button>
@@ -570,6 +572,20 @@ function App() {
             <button onClick={saveData} style={{ padding: '9px 18px', fontSize: '15px', cursor: 'pointer', background: '#444', color: '#fff', border: 'none', borderRadius: '6px' }}>💾 Save Data</button>
             <button onClick={openData} style={{ padding: '9px 18px', fontSize: '15px', cursor: 'pointer', background: '#444', color: '#fff', border: 'none', borderRadius: '6px' }}>📂 Open Data</button>
             <button onClick={exportPNG} style={{ padding: '9px 18px', fontSize: '15px', cursor: 'pointer', background: '#444', color: '#fff', border: 'none', borderRadius: '6px' }}>🖼️ Export PNG</button>
+            <button
+              onClick={() => setShowGrid(prev => !prev)}
+              style={{
+                padding: '9px 18px',
+                fontSize: '15px',
+                cursor: 'pointer',
+                background: showGrid ? '#00bcd4' : '#444',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '6px'
+              }}
+            >
+              📐 Grid {showGrid ? 'ON' : 'OFF'}
+            </button>
             <button onClick={clearAllCandles} style={{ background: '#b71c1c', padding: '9px 18px', fontSize: '15px', cursor: 'pointer', color: '#fff', border: 'none', borderRadius: '6px' }}
               onMouseOver={e => e.target.style.background = '#c62828'} onMouseOut={e => e.target.style.background = '#b71c1c'}>
               🔄 Thiết kế lại
@@ -604,8 +620,8 @@ function App() {
           <Layer>
             {/* ==================== GRID MỜ (đã thêm) ==================== */}
             {/* Vertical grid lines (mỗi vị trí nến) */}
-            {Array.from({ length: 250 }, (_, i) => {
-              const x = 100 + i * 22
+            {showGrid && Array.from({ length: 4000 }, (_, i) => {
+              const x = 100 + i * 111
               return (
                 <Line
                   key={`vgrid-${i}`}
@@ -619,8 +635,8 @@ function App() {
             })}
 
             {/* Horizontal grid lines (mỗi 25 đơn vị giá, theo priceToY) */}
-            {Array.from({ length: Math.floor((600 - (-600)) / 25) + 2 }, (_, i) => {
-              const price = -600 + i * 25
+            {showGrid && Array.from({ length: Math.floor((6000 - (-6000)) / 25) + 2 }, (_, i) => {
+              const price = -6000 + i * 111
               const y = priceToY(price)
               return (
                 <Line
@@ -628,14 +644,14 @@ function App() {
                   points={[0, y, stageSize.width, y]}
                   stroke="#3a3a3a"
                   strokeWidth={1}
-                  opacity={0.25}
+                  opacity={0.5}
                   listening={false}
                 />
               )
             })}
 
             {candles.map((c, i) => {
-              const candleX = 90 + i * 66
+              const candleX = 90 + i * 25
               return (
                 <Candle
                   key={i}
