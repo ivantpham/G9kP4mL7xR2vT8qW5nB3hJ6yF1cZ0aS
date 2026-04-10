@@ -602,8 +602,40 @@ function App() {
           onContextMenu={handleContextMenu}
         >
           <Layer>
+            {/* ==================== GRID MỜ (đã thêm) ==================== */}
+            {/* Vertical grid lines (mỗi vị trí nến) */}
+            {Array.from({ length: 250 }, (_, i) => {
+              const x = 100 + i * 22
+              return (
+                <Line
+                  key={`vgrid-${i}`}
+                  points={[x, 0, x, stageSize.height]}
+                  stroke="#3a3a3a"
+                  strokeWidth={1}
+                  opacity={0.5}
+                  listening={false}
+                />
+              )
+            })}
+
+            {/* Horizontal grid lines (mỗi 25 đơn vị giá, theo priceToY) */}
+            {Array.from({ length: Math.floor((600 - (-600)) / 25) + 2 }, (_, i) => {
+              const price = -600 + i * 25
+              const y = priceToY(price)
+              return (
+                <Line
+                  key={`hgrid-${i}`}
+                  points={[0, y, stageSize.width, y]}
+                  stroke="#3a3a3a"
+                  strokeWidth={1}
+                  opacity={0.25}
+                  listening={false}
+                />
+              )
+            })}
+
             {candles.map((c, i) => {
-              const candleX = 100 + i * 22
+              const candleX = 90 + i * 66
               return (
                 <Candle
                   key={i}
@@ -717,8 +749,31 @@ function App() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', maxWidth: '900px', margin: '0 auto' }}>
             <div>
               <div style={{ marginBottom: '15px' }}>
-                <label style={{ display: 'block', marginBottom: '5px', color: '#00bcd4', fontSize: '14px', fontWeight: 'bold', opacity: allowEditOpen ? 1 : 0.5 }}>
-                  OPEN: <strong style={{ color: '#fff' }}>{editValues.open?.toFixed(2)}</strong>
+                <label style={{ display: 'flex', alignItems: 'center', marginBottom: '5px', color: '#00bcd4', fontSize: '14px', fontWeight: 'bold', opacity: allowEditOpen ? 1 : 0.5 }}>
+                  OPEN:
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={editValues.open}
+                    disabled={!allowEditOpen}
+                    onChange={e => {
+                      setEditValues(prev => ({ ...prev, open: parseFloat(e.target.value) || 0 }))
+                      debouncedUpdate()
+                    }}
+                    style={{
+                      marginLeft: '8px',
+                      width: '130px',
+                      padding: '6px 10px',
+                      fontSize: '15px',
+                      fontWeight: 'bold',
+                      backgroundColor: '#333',
+                      color: '#fff',
+                      border: '1px solid #555',
+                      borderRadius: '6px',
+                      textAlign: 'right',
+                      outline: 'none'
+                    }}
+                  />
                 </label>
                 <input
                   type="range"
@@ -735,8 +790,30 @@ function App() {
                 />
               </div>
               <div style={{ marginBottom: '15px' }}>
-                <label style={{ display: 'block', marginBottom: '5px', color: '#4caf50', fontSize: '14px', fontWeight: 'bold' }}>
-                  HIGH: <strong style={{ color: '#fff' }}>{editValues.high?.toFixed(2)}</strong>
+                <label style={{ display: 'flex', alignItems: 'center', marginBottom: '5px', color: '#4caf50', fontSize: '14px', fontWeight: 'bold' }}>
+                  HIGH:
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={editValues.high}
+                    onChange={e => {
+                      setEditValues(prev => ({ ...prev, high: parseFloat(e.target.value) || 0 }))
+                      debouncedUpdate()
+                    }}
+                    style={{
+                      marginLeft: '8px',
+                      width: '130px',
+                      padding: '6px 10px',
+                      fontSize: '15px',
+                      fontWeight: 'bold',
+                      backgroundColor: '#333',
+                      color: '#fff',
+                      border: '1px solid #555',
+                      borderRadius: '6px',
+                      textAlign: 'right',
+                      outline: 'none'
+                    }}
+                  />
                 </label>
                 <input
                   type="range"
@@ -754,8 +831,30 @@ function App() {
             </div>
             <div>
               <div style={{ marginBottom: '15px' }}>
-                <label style={{ display: 'block', marginBottom: '5px', color: '#ff5722', fontSize: '14px', fontWeight: 'bold' }}>
-                  LOW: <strong style={{ color: '#fff' }}>{editValues.low?.toFixed(2)}</strong>
+                <label style={{ display: 'flex', alignItems: 'center', marginBottom: '5px', color: '#ff5722', fontSize: '14px', fontWeight: 'bold' }}>
+                  LOW:
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={editValues.low}
+                    onChange={e => {
+                      setEditValues(prev => ({ ...prev, low: parseFloat(e.target.value) || 0 }))
+                      debouncedUpdate()
+                    }}
+                    style={{
+                      marginLeft: '8px',
+                      width: '130px',
+                      padding: '6px 10px',
+                      fontSize: '15px',
+                      fontWeight: 'bold',
+                      backgroundColor: '#333',
+                      color: '#fff',
+                      border: '1px solid #555',
+                      borderRadius: '6px',
+                      textAlign: 'right',
+                      outline: 'none'
+                    }}
+                  />
                 </label>
                 <input
                   type="range"
@@ -771,8 +870,30 @@ function App() {
                 />
               </div>
               <div style={{ marginBottom: '15px' }}>
-                <label style={{ display: 'block', marginBottom: '5px', color: '#e91e63', fontSize: '14px', fontWeight: 'bold' }}>
-                  CLOSE: <strong style={{ color: '#fff' }}>{editValues.close?.toFixed(2)}</strong>
+                <label style={{ display: 'flex', alignItems: 'center', marginBottom: '5px', color: '#e91e63', fontSize: '14px', fontWeight: 'bold' }}>
+                  CLOSE:
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={editValues.close}
+                    onChange={e => {
+                      setEditValues(prev => ({ ...prev, close: parseFloat(e.target.value) || 0 }))
+                      debouncedUpdate()
+                    }}
+                    style={{
+                      marginLeft: '8px',
+                      width: '130px',
+                      padding: '6px 10px',
+                      fontSize: '15px',
+                      fontWeight: 'bold',
+                      backgroundColor: '#333',
+                      color: '#fff',
+                      border: '1px solid #555',
+                      borderRadius: '6px',
+                      textAlign: 'right',
+                      outline: 'none'
+                    }}
+                  />
                 </label>
                 <input
                   type="range"
